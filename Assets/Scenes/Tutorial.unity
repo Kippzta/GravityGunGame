@@ -93,8 +93,8 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: ac6506edda596e646ba4036a493288f2, type: 2}
-  m_LightingSettings: {fileID: 4890085278179872738, guid: a9672d4ef138f1f4e9fbb170e06c8461, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: f3a2175a76105ed48a2e7d3b8b29e0f5, type: 2}
+  m_LightingSettings: {fileID: 4890085278179872738, guid: 507c66ff81ef49a4fac714e093bc6b65, type: 2}
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -2532,7 +2532,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 5000
   m_UseColorTemperature: 1
-  m_BoundingSphereOverride: {x: 0, y: 1e-45, z: 0, w: 0}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
@@ -4204,8 +4204,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a83d2f7ae04ab6f4f99b0d85377be998, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.ProbeVolumePerSceneData
-  serializedBakingSet: {fileID: 11400000, guid: 8f3d201d35d8dd749b5fc75f03e02896, type: 2}
-  sceneGUID: 99c9720ab356a0642a771bea13969a05
+  serializedBakingSet: {fileID: 11400000, guid: fbcde15ee1757584d9d8e1813bdc0436, type: 2}
+  sceneGUID: f7c06b446c616504c9d2c2ad53de08cf
   obsoleteAsset: {fileID: 0}
   obsoleteCellSharedDataAsset: {fileID: 0}
   obsoleteCellSupportDataAsset: {fileID: 0}
@@ -13341,33 +13341,33 @@ MonoBehaviour:
     m_Aspect: 0
   m_HasValidSHForNormalization: 1
   m_SHForNormalization:
-    'sh[ 0]': 212.09985
-    'sh[ 1]': 30.821274
-    'sh[ 2]': 70.25517
-    'sh[ 3]': -12.21187
-    'sh[ 4]': 20.201385
-    'sh[ 5]': 28.99883
-    'sh[ 6]': 18.932327
-    'sh[ 7]': -48.08245
-    'sh[ 8]': 8.986289
-    'sh[ 9]': 147.94905
-    'sh[10]': 22.320858
-    'sh[11]': 50.0838
-    'sh[12]': -8.569821
-    'sh[13]': 14.117874
-    'sh[14]': 19.258821
-    'sh[15]': 13.139865
-    'sh[16]': -33.703983
-    'sh[17]': 6.4990306
-    'sh[18]': 93.064964
-    'sh[19]': 15.491481
-    'sh[20]': 33.362255
-    'sh[21]': -5.427033
-    'sh[22]': 9.012267
-    'sh[23]': 10.452065
-    'sh[24]': 8.137384
-    'sh[25]': -21.46326
-    'sh[26]': 4.484181
+    'sh[ 0]': 256.9618
+    'sh[ 1]': 74.20454
+    'sh[ 2]': 70.466
+    'sh[ 3]': -13.706211
+    'sh[ 4]': 26.873587
+    'sh[ 5]': 36.91983
+    'sh[ 6]': 18.87761
+    'sh[ 7]': -47.046215
+    'sh[ 8]': -8.645877
+    'sh[ 9]': 190.45274
+    'sh[10]': 67.838196
+    'sh[11]': 47.822964
+    'sh[12]': -8.78983
+    'sh[13]': 18.368801
+    'sh[14]': 20.115185
+    'sh[15]': 11.2786255
+    'sh[16]': -33.372757
+    'sh[17]': -11.501795
+    'sh[18]': 144.38725
+    'sh[19]': 75.048965
+    'sh[20]': 28.668953
+    'sh[21]': -3.5984364
+    'sh[22]': 11.099325
+    'sh[23]': 2.9964852
+    'sh[24]': 3.6549594
+    'sh[25]': -21.76915
+    'sh[26]': -18.461077
   m_SHValidForCapturePosition: {x: 0, y: 1.2951603, z: 14.694878}
   m_SHValidForSourcePosition: {x: 0, y: 0, z: 23.2}
   m_ReflectionProbeVersion: 10
@@ -23826,7 +23826,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3288422036498632194, guid: cd032c1b497f224468a8bde2289f2adf, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -17
       objectReference: {fileID: 0}
     - target: {fileID: 3288422036498632194, guid: cd032c1b497f224468a8bde2289f2adf, type: 3}
       propertyPath: m_LocalRotation.w

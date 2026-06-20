@@ -411,10 +411,10 @@ MonoBehaviour:
   holdPoint: {fileID: 1782886738894091301}
   aimBlockingLayers:
     serializedVersion: 2
-    m_Bits: 72
+    m_Bits: 328
   pullableLayers:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 320
   useExtendingTether: 0
   maxTetherLength: 20
   tetherExtendSpeed: 55

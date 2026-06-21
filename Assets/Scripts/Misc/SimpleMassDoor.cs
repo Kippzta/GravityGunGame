@@ -38,7 +38,7 @@ public class SimpleMassDoor : MonoBehaviour
     [SerializeField] private bool stayOpenOnceOpened = false;
 
     [Header("Blocking / Safety")]
-    [Tooltip("If true, the door will not close while the player or physics objects are in the doorway.")]
+    [Tooltip("If true, the door will not close while the player or physics objects are in the way.")]
     [SerializeField] private bool blockClosingWhenObstructed = true;
 
     [Tooltip("Layers that can block the door from closing. Include Player and Pullable/physics object layers.")]
@@ -50,14 +50,14 @@ public class SimpleMassDoor : MonoBehaviour
     [Tooltip("Extra padding around the door collider when checking if something blocks closing.")]
     [SerializeField] private float blockerCheckPadding = 0.03f;
 
-    [Tooltip("If true, the door opens slightly when blocked while closing. This helps avoid squeezing objects.")]
-    [SerializeField] private bool pushOpenSlightlyWhenBlocked = true;
+    [Tooltip("How many small close-steps are tested per physics frame. Higher values catch blockers more reliably on fast doors.")]
+    [SerializeField] private int closingSafetySteps = 4;
 
-    [Tooltip("How much the door opens back up per second when blocked while closing.")]
-    [SerializeField] private float blockedOpenBackSpeed = 1f;
+    [Tooltip("If true, the door also checks its current position while blocked. This keeps it locked until the blocker is actually gone.")]
+    [SerializeField] private bool holdBlockedPositionUntilClear = true;
 
     [Header("Physics")]
-    [Tooltip("If true, a kinematic Rigidbody is added/used so the door collider moves safely through physics.")]
+    [Tooltip("If true, a kinematic Rigidbody is added/used so the door collider moves safely and cannot be pushed by physics objects.")]
     [SerializeField] private bool useKinematicRigidbody = true;
 
     [Tooltip("Rigidbody interpolation used if Use Kinematic Rigidbody is enabled.")]
@@ -73,7 +73,7 @@ public class SimpleMassDoor : MonoBehaviour
     [Tooltip("Optional sound played when the door starts closing.")]
     [SerializeField] private AudioSource closeSound;
 
-    [Tooltip("Optional sound played when the door tries to close but is blocked.")]
+    [Tooltip("Optional sound played once when the door tries to close but is blocked.")]
     [SerializeField] private AudioSource blockedSound;
 
     [Header("Debug")]
@@ -104,12 +104,17 @@ public class SimpleMassDoor : MonoBehaviour
     {
         Collider doorCollider = GetComponent<Collider>();
         doorCollider.isTrigger = false;
+
+        useKinematicRigidbody = true;
+        blockClosingWhenObstructed = true;
+        blockerCheckPadding = 0.03f;
+        closingSafetySteps = 4;
+        holdBlockedPositionUntilClear = true;
     }
 
     private void Awake()
     {
-        doorColliders = GetComponentsInChildren<Collider>();
-
+        CacheDoorColliders();
         SetupRigidbody();
 
         closedPosition = transform.position;
@@ -126,6 +131,21 @@ public class SimpleMassDoor : MonoBehaviour
     private void FixedUpdate()
     {
         UpdateDoorMovement();
+    }
+
+    private void CacheDoorColliders()
+    {
+        doorColliders = GetComponentsInChildren<Collider>();
+
+        foreach (Collider doorCollider in doorColliders)
+        {
+            if (doorCollider == null)
+            {
+                continue;
+            }
+
+            doorCollider.isTrigger = false;
+        }
     }
 
     private void SetupRigidbody()
@@ -171,26 +191,11 @@ public class SimpleMassDoor : MonoBehaviour
 
         if (blockClosingWhenObstructed && tryingToClose)
         {
-            Vector3 candidatePosition = Vector3.Lerp(closedPosition, openPosition, candidateAmount);
+            candidateAmount = GetSafeClosingAmount(OpenAmount, candidateAmount);
 
-            if (WouldDoorOverlapBlockerAtPosition(candidatePosition))
+            if (Mathf.Approximately(candidateAmount, OpenAmount))
             {
                 IsBlocked = true;
-                candidateAmount = OpenAmount;
-
-                if (pushOpenSlightlyWhenBlocked)
-                {
-                    candidateAmount = Mathf.MoveTowards(
-                        OpenAmount,
-                        1f,
-                        blockedOpenBackSpeed * Time.fixedDeltaTime
-                    );
-                }
-
-                if (!wasBlocked)
-                {
-                    PlayBlockedSound();
-                }
             }
         }
 
@@ -213,6 +218,11 @@ public class SimpleMassDoor : MonoBehaviour
             }
         }
 
+        if (IsBlocked && !wasBlocked)
+        {
+            PlayBlockedSound();
+        }
+
         wasMoving = moving;
         wasBlocked = IsBlocked;
 
@@ -224,14 +234,46 @@ public class SimpleMassDoor : MonoBehaviour
         }
     }
 
+    private float GetSafeClosingAmount(float fromAmount, float requestedAmount)
+    {
+        if (holdBlockedPositionUntilClear)
+        {
+            Vector3 currentPosition = Vector3.Lerp(closedPosition, openPosition, fromAmount);
+
+            if (WouldDoorOverlapBlockerAtPosition(currentPosition))
+            {
+                return fromAmount;
+            }
+        }
+
+        int steps = Mathf.Max(1, closingSafetySteps);
+        float safeAmount = fromAmount;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            float testAmount = Mathf.Lerp(fromAmount, requestedAmount, i / (float)steps);
+            Vector3 testPosition = Vector3.Lerp(closedPosition, openPosition, testAmount);
+
+            if (WouldDoorOverlapBlockerAtPosition(testPosition))
+            {
+                return safeAmount;
+            }
+
+            safeAmount = testAmount;
+        }
+
+        return requestedAmount;
+    }
+
     private bool WouldDoorOverlapBlockerAtPosition(Vector3 candidateDoorPosition)
     {
         if (doorColliders == null || doorColliders.Length == 0)
         {
-            doorColliders = GetComponentsInChildren<Collider>();
+            CacheDoorColliders();
         }
 
         Vector3 moveDelta = candidateDoorPosition - transform.position;
+
         QueryTriggerInteraction queryTriggerInteraction = triggersCanBlockClosing
             ? QueryTriggerInteraction.Collide
             : QueryTriggerInteraction.Ignore;
@@ -264,6 +306,11 @@ public class SimpleMassDoor : MonoBehaviour
                 }
 
                 if (IsOwnCollider(hit))
+                {
+                    continue;
+                }
+
+                if (hit.attachedRigidbody == doorRigidbody)
                 {
                     continue;
                 }

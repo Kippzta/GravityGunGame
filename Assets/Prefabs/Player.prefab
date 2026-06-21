@@ -271,6 +271,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2163670352280962287}
+  - {fileID: 170065151237973739}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &2302964883581851628
@@ -408,6 +409,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   playerCamera: {fileID: 9129337526987392712}
+  muzzlePoint: {fileID: 0}
   holdPoint: {fileID: 1782886738894091301}
   aimBlockingLayers:
     serializedVersion: 2
@@ -415,67 +417,35 @@ MonoBehaviour:
   pullableLayers:
     serializedVersion: 2
     m_Bits: 320
-  useExtendingTether: 0
-  maxTetherLength: 20
+  holdToUse: 1
+  rightClickReleases: 1
+  maxTetherDistance: 35
   tetherExtendSpeed: 55
   initialTetherLength: 0
   tetherFollowsAimWhileExtending: 0
   nonPullableObjectsBlockTether: 1
-  minRopeLength: 0.5
-  idleHoldPointDistance: 4
-  autoAdjustRopeForSwing: 1
-  swingRopeLengthMultiplier: 0.78
-  swingRopeShortenAmount: 1
-  ropeLengthAdjustSpeed: 12
-  autoAdjustLightObjectRope: 0
-  useNoStretchConstraint: 1
-  constraintTolerance: 0.015
-  removeOnlyOutwardVelocity: 1
-  catchDampingDistance: 1.75
-  catchDampingStrength: 5
-  playerMass: 80
-  tighteningPullAcceleration: 26
-  ropeTensionAcceleration: 8
-  tensionAssistActivationDistance: 0.65
-  maxUpwardTetherAcceleration: 14
-  maxPlayerTetherAcceleration: 70
-  maxPlayerTetherVelocity: 30
-  holdPointSpring: 180
-  lightObjectDamping: 5
-  objectSwingInfluence: 18
-  maxObjectVelocity: 30
-  heavyObjectReactionMultiplier: 0.35
-  heavyObjectSwingTransfer: 0.05
-  heavyObjectLoosenForce: 1
-  heavyObjectTorqueMultiplier: 0.5
-  maxHeavyObjectVelocity: 12
-  massAnchorPower: 1.4
-  minHeavyObjectReactionShare: 0.05
-  groundedPlayerSwingInfluence: 13
-  airborneSwingPumpForce: 0.5
+  fireCooldown: 0
+  releaseCooldown: 0
+  ropeTolerance: 0.12
+  removeOutwardVelocityAtLimit: 1
+  maxSwingSpeed: 45
+  maxOutwardSpeedOnAttach: 0.5
+  maxTotalSpeedOnAttach: 16
+  ropeCorrectionStrength: 4
+  maxRopeCorrectionPerFrame: 0.02
+  useSmoothRopeCorrection: 1
+  airborneSwingControl: 18
+  groundedSwingControl: 10
   airborneDirectControl: 0.035
-  minSwingSpeedForPumpTiming: 1.25
-  wrongDirectionAirBrake: 2.5
-  lightObjectReleaseVelocityMultiplier: 1.15
-  lightObjectThrowImpulse: 1.5
-  debugEnabled: 1
-  drawGameViewDebug: 1
-  drawSceneGizmos: 1
+  objectHoldDistance: 4
+  objectSpringStrength: 220
+  objectDamping: 22
+  maxObjectPullForce: 2200
+  maxPulledObjectVelocity: 18
+  objectKeepsGravity: 1
+  releaseThrowImpulse: 0
   showDebugPanel: 1
-  showAimLine: 1
-  showTetherLine: 1
-  showRopeLengthGuide: 1
-  showForceLine: 1
-  debugMarkerSize: 0.18
-  debugLineWidth: 0.035
-  aimColor: {r: 1, g: 1, b: 1, a: 1}
-  extendingColor: {r: 0, g: 1, b: 1, a: 1}
-  lightObjectColor: {r: 0, g: 1, b: 0, a: 1}
-  staticAnchorColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  heavyAnchorColor: {r: 1, g: 0.45, b: 0, a: 1}
-  blockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  ropeLengthColor: {r: 1, g: 0, b: 1, a: 1}
-  forceColor: {r: 1, g: 0, b: 0, a: 1}
+  drawGizmos: 1
 --- !u!114 &7770379208876967580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -499,7 +469,7 @@ Rigidbody:
   serializedVersion: 5
   m_Mass: 80
   m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_AngularDamping: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -514,7 +484,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 1
-  m_Constraints: 80
+  m_Constraints: 112
   m_CollisionDetection: 2
 --- !u!114 &5842378155591898797
 MonoBehaviour:
@@ -580,6 +550,183 @@ MonoBehaviour:
   swingWaveAmount: 0.04
   swingWaveSpeed: 7
   showDebugValues: 0
+--- !u!1 &3742230049748351642
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 170065151237973739}
+  - component: {fileID: 7710484309125614960}
+  - component: {fileID: 8111801787553470840}
+  - component: {fileID: 91995640420582553}
+  m_Layer: 7
+  m_Name: Canvas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &170065151237973739
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3742230049748351642}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1829736122250496886}
+  m_Father: {fileID: 3288422036498632194}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
+--- !u!223 &7710484309125614960
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3742230049748351642}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!114 &8111801787553470840
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3742230049748351642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 0
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 800, y: 600}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
+--- !u!114 &91995640420582553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3742230049748351642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!1 &5410941579294264753
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1829736122250496886}
+  - component: {fileID: 8657112811535605964}
+  - component: {fileID: 2698644082135013149}
+  m_Layer: 7
+  m_Name: Crosshaird
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1829736122250496886
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5410941579294264753}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 170065151237973739}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &8657112811535605964
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5410941579294264753}
+  m_CullTransparentMesh: 1
+--- !u!114 &2698644082135013149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5410941579294264753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &8027358030527035822
 GameObject:
   m_ObjectHideFlags: 0
@@ -589,6 +736,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1782886738894091301}
+  - component: {fileID: 5329460263059406763}
+  - component: {fileID: 4848294217769191519}
   m_Layer: 5
   m_Name: HoldPoint
   m_TagString: Untagged
@@ -611,3 +760,135 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2163670352280962287}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!120 &5329460263059406763
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8027358030527035822}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 1}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 1
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 1, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 0
+    numCapVertices: 0
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 1
+  m_Loop: 0
+  m_ApplyActiveColorSpace: 1
+--- !u!114 &4848294217769191519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8027358030527035822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27cd782baa9f8914db3211cc336288fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PullGunLineVFX
+  pullGun: {fileID: 2161392955407865275}
+  muzzlePoint: {fileID: 1782886738894091301}
+  linePoints: 16
+  ropeSag: 0.05
+  ropeWaveAmount: 0.025
+  ropeWaveSpeed: 12
+  activeWidth: 0.045
+  visibilityLerpSpeed: 20
+  lineMaterial: {fileID: 0}
+  lineColor: {r: 0, g: 1, b: 1, a: 1}

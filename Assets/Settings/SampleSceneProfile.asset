@@ -65,7 +65,7 @@ MonoBehaviour:
   active: 1
   quality:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 2
   enable:
     m_OverrideState: 1
     m_Value: 1
@@ -88,16 +88,16 @@ MonoBehaviour:
     m_Value: 1
   m_MaxRaySteps:
     m_OverrideState: 1
-    m_Value: 32
+    m_Value: 128
   m_DenoiseSS:
     m_OverrideState: 1
     m_Value: 1
   m_HalfResolutionDenoiserSS:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0
   m_DenoiserRadiusSS:
     m_OverrideState: 1
-    m_Value: 0.75
+    m_Value: 0.5
   m_SecondDenoiserPassSS:
     m_OverrideState: 1
     m_Value: 1
@@ -682,7 +682,7 @@ MonoBehaviour:
     m_Value: 1
   usedAlgorithm:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 1
   depthBufferThickness:
     m_OverrideState: 0
     m_Value: 0.01
@@ -899,7 +899,7 @@ MonoBehaviour:
   active: 1
   quality:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 2
   rayTracing:
     m_OverrideState: 0
     m_Value: 0
@@ -940,31 +940,31 @@ MonoBehaviour:
     m_Value: 1
   m_StepCount:
     m_OverrideState: 1
-    m_Value: 4
+    m_Value: 16
   m_FullResolution:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 1
   m_MaximumRadiusInPixels:
     m_OverrideState: 1
-    m_Value: 32
+    m_Value: 80
   m_BilateralUpsample:
     m_OverrideState: 1
-    m_Value: 0
+    m_Value: 1
   m_DirectionCount:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 4
   m_RayLength:
     m_OverrideState: 1
-    m_Value: 0.5
+    m_Value: 20
   m_SampleCount:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 8
   m_Denoise:
     m_OverrideState: 1
     m_Value: 1
   m_DenoiserRadius:
     m_OverrideState: 1
-    m_Value: 0.25
+    m_Value: 0.65
 --- !u!114 &849379129802519247
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -1111,18 +1111,18 @@ MonoBehaviour:
   active: 1
   indirectDiffuseLightingMultiplier:
     m_OverrideState: 1
-    m_Value: 2
+    m_Value: 1
   indirectDiffuseLightingLayers:
     m_OverrideState: 0
     m_Value: 65535
   reflectionLightingMultiplier:
     m_OverrideState: 1
-    m_Value: 2
+    m_Value: 1
   reflectionLightingLayers:
     m_OverrideState: 0
     m_Value: 65535
   reflectionProbeIntensityMultiplier:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
 --- !u!114 &7391319092446245454
 MonoBehaviour:

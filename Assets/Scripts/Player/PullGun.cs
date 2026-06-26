@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(Rigidbody))]
+// [RequireComponent(typeof(Rigidbody))]
 public class PullGun : MonoBehaviour
 {
     private enum PullState
@@ -22,6 +22,7 @@ public class PullGun : MonoBehaviour
 
     [Tooltip("Where pulled objects are pulled toward. If empty, one is generated in front of the camera.")]
     [SerializeField] private Transform holdPoint;
+    [SerializeField] public CoopFirstPersonController controller;
 
     [Header("Layers")]
     [Tooltip("Everything the tether can hit. Include walls, ground, pullable objects, and blockers.")]
@@ -123,7 +124,6 @@ public class PullGun : MonoBehaviour
     [SerializeField] private bool drawGizmos = true;
 
     private Rigidbody playerRb;
-    private CoopFirstPersonController controller;
 
     private PullState state = PullState.Idle;
 
@@ -164,9 +164,19 @@ public class PullGun : MonoBehaviour
 
     private void Awake()
     {
-        playerRb = GetComponent<Rigidbody>();
-        controller = GetComponent<CoopFirstPersonController>();
+        // 1. Först hittar vi kontrollern
+        controller = GetComponentInParent<CoopFirstPersonController>();
 
+        // 2. Sedan använder vi kontrollern för att hitta spelarens Rigidbody
+        if (controller != null)
+        {
+            playerRb = controller.GetComponent<Rigidbody>();
+            Debug.Log("Sving-kontrollern och dess Rigidbody hittades!");
+        }
+        else
+        {
+            Debug.LogError("Hittade ingen CoopFirstPersonController!");
+        }
         if (playerCamera == null)
         {
             playerCamera = GetComponentInChildren<Camera>();
@@ -193,14 +203,24 @@ public class PullGun : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        ReleasePull();
+    }
+
+
     private void Update()
     {
+        if (!enabled) return;
+
         HandleInput();
         UpdateHoldPoint();
     }
 
     private void FixedUpdate()
     {
+        if (!enabled) return;
+
         ResetDebugValues();
 
         switch (state)
@@ -222,6 +242,8 @@ public class PullGun : MonoBehaviour
 
     private void HandleInput()
     {
+        if (!enabled) return;
+
         if (Mouse.current == null)
         {
             return;
@@ -250,6 +272,7 @@ public class PullGun : MonoBehaviour
             ReleasePull();
         }
     }
+
 
     private void StartTether()
     {
@@ -773,7 +796,7 @@ public class PullGun : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!showDebugPanel)
+        if (!showDebugPanel || !enabled)
         {
             return;
         }

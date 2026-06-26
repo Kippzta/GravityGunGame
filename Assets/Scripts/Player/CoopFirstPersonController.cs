@@ -13,6 +13,9 @@ public class CoopFirstPersonController : MonoBehaviour
     [SerializeField] private float minPitch = -85f;
     [SerializeField] private float maxPitch = 85f;
 
+    [Tooltip("Use Rigidbody.MoveRotation for yaw. This avoids jitter when the player has Rigidbody interpolation enabled.")]
+    [SerializeField] private bool useRigidbodyYawRotation = true;
+
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 6f;
     [SerializeField] private float runSpeed = 9f;
@@ -59,7 +62,9 @@ public class CoopFirstPersonController : MonoBehaviour
     private CapsuleCollider capsule;
     private PullGun pullGun;
 
+    private float yaw;
     private float pitch;
+
     private bool grounded;
     private bool jumpRequested;
     private Vector2 moveInput;
@@ -97,6 +102,14 @@ public class CoopFirstPersonController : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
+        yaw = transform.eulerAngles.y;
+
+        if (playerCamera != null)
+        {
+            pitch = NormalizeAngle(playerCamera.transform.localEulerAngles.x);
+            pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        }
+
         currentMoveSpeed = walkSpeed;
     }
 
@@ -109,6 +122,13 @@ public class CoopFirstPersonController : MonoBehaviour
     private void Update()
     {
         ReadLookInput();
+        ApplyCameraPitch();
+
+        if (!useRigidbodyYawRotation)
+        {
+            ApplyYawRotationTransform();
+        }
+
         ReadMovementInput();
         UpdateRunState();
         ReadJumpInput();
@@ -117,6 +137,11 @@ public class CoopFirstPersonController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (useRigidbodyYawRotation)
+        {
+            ApplyYawRotationRigidbody();
+        }
+
         CheckGrounded();
         ApplyCustomGravity();
         ApplyMovement();
@@ -139,15 +164,31 @@ public class CoopFirstPersonController : MonoBehaviour
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
-        transform.Rotate(Vector3.up * mouseDelta.x * mouseSensitivity);
+        yaw += mouseDelta.x * mouseSensitivity;
 
         pitch -= mouseDelta.y * mouseSensitivity;
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+    }
 
-        if (playerCamera != null)
+    private void ApplyCameraPitch()
+    {
+        if (playerCamera == null)
         {
-            playerCamera.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+            return;
         }
+
+        playerCamera.transform.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+    }
+
+    private void ApplyYawRotationRigidbody()
+    {
+        Quaternion targetRotation = Quaternion.Euler(0f, yaw, 0f);
+        rb.MoveRotation(targetRotation);
+    }
+
+    private void ApplyYawRotationTransform()
+    {
+        transform.rotation = Quaternion.Euler(0f, yaw, 0f);
     }
 
     private void ReadMovementInput()
@@ -357,5 +398,17 @@ public class CoopFirstPersonController : MonoBehaviour
             groundMask,
             QueryTriggerInteraction.Ignore
         );
+    }
+
+    private float NormalizeAngle(float angle)
+    {
+        angle %= 360f;
+
+        if (angle > 180f)
+        {
+            angle -= 360f;
+        }
+
+        return angle;
     }
 }

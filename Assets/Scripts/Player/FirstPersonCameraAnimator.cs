@@ -70,6 +70,16 @@ public class FirstPersonCameraAnimator : MonoBehaviour
     [SerializeField] private float swingWaveAmount = 0.04f;
     [SerializeField] private float swingWaveSpeed = 7f;
 
+    [Header("Jitter Safety")]
+    [Tooltip("If true, camera animation is applied from the controller's current base camera rotation each frame instead of accumulating on top of itself.")]
+    [SerializeField] private bool useStableBaseRotation = true;
+
+    [Tooltip("If true, disables swing camera animation while grounded. This can reduce shake when tethered and touching floors/walls.")]
+    [SerializeField] private bool disableSwingAnimationWhileGrounded = false;
+
+    [Tooltip("If true, clears camera animation offsets when animations are disabled.")]
+    [SerializeField] private bool resetOffsetsWhenDisabled = true;
+
     [Header("Debug")]
     [SerializeField] private bool showDebugValues = false;
 
@@ -102,9 +112,20 @@ public class FirstPersonCameraAnimator : MonoBehaviour
 
     private void Awake()
     {
-        if (controller == null) controller = GetComponent<CoopFirstPersonController>();
-        if (pullGun == null) pullGun = GetComponent<PullGun>();
-        if (playerRigidbody == null) playerRigidbody = GetComponent<Rigidbody>();
+        if (controller == null)
+        {
+            controller = GetComponent<CoopFirstPersonController>();
+        }
+
+        if (pullGun == null)
+        {
+            pullGun = GetComponent<PullGun>();
+        }
+
+        if (playerRigidbody == null)
+        {
+            playerRigidbody = GetComponent<Rigidbody>();
+        }
 
         if (cameraTransform == null)
         {
@@ -125,6 +146,11 @@ public class FirstPersonCameraAnimator : MonoBehaviour
         {
             wasGrounded = controller.IsGrounded;
         }
+
+        if (playerRigidbody != null)
+        {
+            previousVerticalVelocity = playerRigidbody.linearVelocity.y;
+        }
     }
 
     private void LateUpdate()
@@ -134,9 +160,20 @@ public class FirstPersonCameraAnimator : MonoBehaviour
             return;
         }
 
+        Quaternion baseLocalRotation = cameraTransform.localRotation;
+
         if (!animationsEnabled)
         {
+            if (resetOffsetsWhenDisabled)
+            {
+                currentPositionOffset = Vector3.zero;
+                targetPositionOffset = Vector3.zero;
+                currentRotationOffset = Vector3.zero;
+                targetRotationOffset = Vector3.zero;
+            }
+
             cameraTransform.localPosition = originalCameraLocalPosition;
+            cameraTransform.localRotation = baseLocalRotation;
             return;
         }
 
@@ -167,7 +204,14 @@ public class FirstPersonCameraAnimator : MonoBehaviour
             currentRotationOffset.z
         );
 
-        cameraTransform.localRotation = cameraTransform.localRotation * additiveRotation;
+        if (useStableBaseRotation)
+        {
+            cameraTransform.localRotation = baseLocalRotation * additiveRotation;
+        }
+        else
+        {
+            cameraTransform.localRotation = cameraTransform.localRotation * additiveRotation;
+        }
 
         if (controller != null)
         {
@@ -411,7 +455,7 @@ public class FirstPersonCameraAnimator : MonoBehaviour
 
     private void ApplySwingAnimation()
     {
-        if (!enableSwingAnimation || playerRigidbody == null || pullGun == null)
+        if (!enableSwingAnimation || playerRigidbody == null || pullGun == null || cameraTransform == null)
         {
             return;
         }
@@ -420,6 +464,11 @@ public class FirstPersonCameraAnimator : MonoBehaviour
             swingOnlyOnHeavyTethers
                 ? pullGun.IsTetheredToHeavyTarget
                 : pullGun.IsTethered;
+
+        if (disableSwingAnimationWhileGrounded && controller != null && controller.IsGrounded)
+        {
+            shouldSwingAnimate = false;
+        }
 
         if (!shouldSwingAnimate)
         {
@@ -470,8 +519,9 @@ public class FirstPersonCameraAnimator : MonoBehaviour
             $"Jump: {jumpTimer:F2}\n" +
             $"Landing: {landingTimer:F2}\n" +
             $"Wall Impact: {wallImpactTimer:F2}\n" +
-            $"Swing Speed: {smoothedSwingSpeed:F2}";
+            $"Swing Speed: {smoothedSwingSpeed:F2}\n" +
+            $"Rotation Offset: {currentRotationOffset}";
 
-        GUI.Box(new Rect(20f, 270f, 300f, 210f), text);
+        GUI.Box(new Rect(20f, 270f, 330f, 235f), text);
     }
 }

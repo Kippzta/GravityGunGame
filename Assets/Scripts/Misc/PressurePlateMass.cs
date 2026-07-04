@@ -14,11 +14,14 @@ public class PressurePlateMass : MonoBehaviour
     [Tooltip("If true, doors stay open forever after this plate opens them once.")]
     [SerializeField] private bool stayOpenOnceOpened = false;
 
+    [Tooltip("If true, assigned doors and their children will never count as mass on this pressure plate.")]
+    [SerializeField] private bool ignoreAssignedDoors = true;
+
     [Header("Mass Requirement")]
     [Tooltip("Total Rigidbody mass required to press this plate.")]
     [SerializeField] private float requiredMass = 20f;
 
-    [Tooltip("Only objects on these layers count toward the pressure plate mass.")]
+    [Tooltip("Only objects on these layers count toward the pressure plate mass. Usually use Player + Pullable only.")]
     [SerializeField] private LayerMask activatorLayers = ~0;
 
     [Tooltip("If true, the player uses Player Mass Override instead of Rigidbody.mass.")]
@@ -28,7 +31,7 @@ public class PressurePlateMass : MonoBehaviour
     [SerializeField] private float playerMassOverride = 80f;
 
     [Tooltip("If true, kinematic Rigidbodies can count toward the plate mass.")]
-    [SerializeField] private bool includeKinematicBodies = true;
+    [SerializeField] private bool includeKinematicBodies = false;
 
     [Tooltip("If true, sleeping Rigidbodies still count while sitting on the plate.")]
     [SerializeField] private bool includeSleepingBodies = true;
@@ -92,6 +95,9 @@ public class PressurePlateMass : MonoBehaviour
     [Tooltip("Shows debug information in the Game view.")]
     [SerializeField] private bool showDebugPanel = false;
 
+    [Tooltip("Also shows the names of the rigidbodies currently counted by the plate.")]
+    [SerializeField] private bool showDetectedBodyNames = true;
+
     [Tooltip("Draws the mass detection area in the Scene view.")]
     [SerializeField] private bool drawGizmos = true;
 
@@ -124,6 +130,7 @@ public class PressurePlateMass : MonoBehaviour
     public float TargetPressedAmount => targetPressedAmount;
     public bool IsPressed => isPressed;
     public bool DesiredDoorOpen => desiredDoorOpen;
+    public bool StableDoorOpen => stableDoorOpen;
     public int ObjectCount => bodiesOnPlate.Count;
 
     private void Reset()
@@ -142,6 +149,10 @@ public class PressurePlateMass : MonoBehaviour
         pressedDownDistance = 0.12f;
         pressMoveSpeed = 8f;
         releaseMoveSpeed = 8f;
+        closeWhenReleased = true;
+        stayOpenOnceOpened = false;
+        ignoreAssignedDoors = true;
+        includeKinematicBodies = false;
 
         SetupPlateRigidbody();
     }
@@ -156,9 +167,15 @@ public class PressurePlateMass : MonoBehaviour
         closedWorldPosition = transform.position;
         pressedWorldPosition = closedWorldPosition - transform.up * pressedDownDistance;
 
+        isPressed = false;
         desiredDoorOpen = false;
         stableDoorOpen = false;
         lastCommandedDoorOpen = false;
+        hasCommandedDoorState = false;
+        hasOpenedOnce = false;
+
+        releaseTimer = releaseDelay;
+        closeTimer = closeDelay;
     }
 
     private void FixedUpdate()
@@ -212,7 +229,7 @@ public class PressurePlateMass : MonoBehaviour
                 continue;
             }
 
-            if (hit == plateCollider || hit.transform == transform || hit.transform.IsChildOf(transform))
+            if (ShouldIgnoreCollider(hit))
             {
                 continue;
             }
@@ -224,12 +241,22 @@ public class PressurePlateMass : MonoBehaviour
                 continue;
             }
 
+            if (body == plateRigidbody)
+            {
+                continue;
+            }
+
             if (!includeKinematicBodies && body.isKinematic)
             {
                 continue;
             }
 
             if (!includeSleepingBodies && body.IsSleeping())
+            {
+                continue;
+            }
+
+            if (ShouldIgnoreRigidbody(body))
             {
                 continue;
             }
@@ -255,6 +282,93 @@ public class PressurePlateMass : MonoBehaviour
         {
             targetPressedAmount = Mathf.Clamp01(CurrentMass / requiredMass);
         }
+    }
+
+    private bool ShouldIgnoreCollider(Collider hit)
+    {
+        if (hit == plateCollider)
+        {
+            return true;
+        }
+
+        if (hit.transform == transform)
+        {
+            return true;
+        }
+
+        if (hit.transform.IsChildOf(transform))
+        {
+            return true;
+        }
+
+        if (ignoreAssignedDoors && IsPartOfAssignedDoor(hit.transform))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool ShouldIgnoreRigidbody(Rigidbody body)
+    {
+        if (body == null)
+        {
+            return true;
+        }
+
+        if (body.transform == transform)
+        {
+            return true;
+        }
+
+        if (body.transform.IsChildOf(transform))
+        {
+            return true;
+        }
+
+        if (ignoreAssignedDoors && IsPartOfAssignedDoor(body.transform))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsPartOfAssignedDoor(Transform checkedTransform)
+    {
+        if (checkedTransform == null || doors == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < doors.Length; i++)
+        {
+            SimpleMassDoor door = doors[i];
+
+            if (door == null)
+            {
+                continue;
+            }
+
+            Transform doorTransform = door.transform;
+
+            if (checkedTransform == doorTransform)
+            {
+                return true;
+            }
+
+            if (checkedTransform.IsChildOf(doorTransform))
+            {
+                return true;
+            }
+
+            if (doorTransform.IsChildOf(checkedTransform))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private float GetMassForBody(Rigidbody body)
@@ -338,13 +452,15 @@ public class PressurePlateMass : MonoBehaviour
 
         if (closeDelay > 0f)
         {
-            closeTimer -= Time.fixedDeltaTime;
-            desiredDoorOpen = closeTimer > 0f;
+            if (closeTimer > 0f)
+            {
+                closeTimer -= Time.fixedDeltaTime;
+                desiredDoorOpen = true;
+                return;
+            }
         }
-        else
-        {
-            desiredDoorOpen = false;
-        }
+
+        desiredDoorOpen = false;
     }
 
     private void UpdateStableDoorState()
@@ -478,11 +594,27 @@ public class PressurePlateMass : MonoBehaviour
             $"Pressed: {currentPressedAmount:P0}\n" +
             $"Target Pressed: {targetPressedAmount:P0}\n" +
             $"Is Pressed: {isPressed}\n" +
-            $"Door Open: {stableDoorOpen}\n" +
+            $"Desired Door Open: {desiredDoorOpen}\n" +
+            $"Stable Door Open: {stableDoorOpen}\n" +
+            $"Close When Released: {closeWhenReleased}\n" +
+            $"Stay Open Once: {stayOpenOnceOpened}\n" +
             $"Bodies: {bodiesOnPlate.Count}\n" +
             $"Doors: {(doors != null ? doors.Length : 0)}";
 
-        GUI.Box(new Rect(20f, 380f, 300f, 205f), text);
+        if (showDetectedBodyNames && bodiesOnPlate.Count > 0)
+        {
+            text += "\n\nDetected:";
+
+            foreach (Rigidbody body in bodiesOnPlate.Keys)
+            {
+                if (body != null)
+                {
+                    text += $"\n- {body.name}";
+                }
+            }
+        }
+
+        GUI.Box(new Rect(20f, 380f, 360f, 285f), text);
     }
 
     private void OnDrawGizmos()

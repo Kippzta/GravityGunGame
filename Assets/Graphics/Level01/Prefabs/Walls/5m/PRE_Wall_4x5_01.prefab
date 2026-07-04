@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: bf1e551a326327e458bf623d80c0fd3b, type: 2}
+    - target: {fileID: -7511558181221131132, guid: f52b70fa2cc9ef8409896ee288edcbce, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 3a982d1dbeee1c34fa33e28b6a3c4fb9, type: 2}
     - target: {fileID: 919132149155446097, guid: f52b70fa2cc9ef8409896ee288edcbce, type: 3}
       propertyPath: m_Name
       value: PRE_Wall_4x5_01
@@ -72,14 +76,14 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4329915203353576924, guid: f52b70fa2cc9ef8409896ee288edcbce, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1595950195204695857}
+      addedObject: {fileID: 4614676389860603229}
   m_SourcePrefab: {fileID: 100100000, guid: f52b70fa2cc9ef8409896ee288edcbce, type: 3}
 --- !u!1 &2098072096017188533 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4329915203353576924, guid: f52b70fa2cc9ef8409896ee288edcbce, type: 3}
   m_PrefabInstance: {fileID: 2381044774044402537}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &1595950195204695857
+--- !u!65 &4614676389860603229
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -29,6 +29,42 @@ public class FirstPersonCameraAnimator : MonoBehaviour
     [SerializeField] private float runPitchAmount = 0.9f;
     [SerializeField] private float movementBobBlendSpeed = 10f;
 
+    [Header("Footsteps")]
+    [SerializeField] private bool enableFootsteps = true;
+
+    [Tooltip("AudioSource used for footsteps. If empty, one is created automatically.")]
+    [SerializeField] private AudioSource footstepAudioSource;
+
+    [Tooltip("Walking footstep clips.")]
+    [SerializeField] private AudioClip[] walkFootsteps;
+
+    [Tooltip("Running footstep clips. If empty, walk clips are used.")]
+    [SerializeField] private AudioClip[] runFootsteps;
+
+    [Tooltip("Landing sound clips.")]
+    [SerializeField] private AudioClip[] landingFootsteps;
+
+    [Tooltip("How loud walking footsteps are.")]
+    [SerializeField] private float walkFootstepVolume = 0.55f;
+
+    [Tooltip("How loud running footsteps are.")]
+    [SerializeField] private float runFootstepVolume = 0.8f;
+
+    [Tooltip("How loud landing footsteps are.")]
+    [SerializeField] private float landingFootstepVolume = 0.9f;
+
+    [Tooltip("Random pitch variation for footsteps.")]
+    [SerializeField] private Vector2 footstepPitchRange = new Vector2(0.92f, 1.08f);
+
+    [Tooltip("Minimum horizontal speed required before footsteps play.")]
+    [SerializeField] private float minimumFootstepSpeed = 0.35f;
+
+    [Tooltip("Prevents footsteps from triggering too close together.")]
+    [SerializeField] private float minimumTimeBetweenFootsteps = 0.12f;
+
+    [Tooltip("If true, footsteps are played as 2D first-person sounds.")]
+    [SerializeField] private bool footstepsAre2D = true;
+
     [Header("Jump")]
     [SerializeField] private bool enableJumpAnimation = true;
     [SerializeField] private float jumpTriggerVelocity = 1.5f;
@@ -96,6 +132,10 @@ public class FirstPersonCameraAnimator : MonoBehaviour
     private float movementBobTimer;
     private float movementBobWeight;
 
+    private float previousFootstepPhase;
+    private float lastFootstepTime;
+    private bool nextFootIsRight;
+
     private float jumpTimer;
     private float landingTimer;
     private float wallImpactTimer;
@@ -142,6 +182,26 @@ public class FirstPersonCameraAnimator : MonoBehaviour
             originalCameraLocalPosition = cameraTransform.localPosition;
         }
 
+        if (footstepAudioSource == null)
+        {
+            footstepAudioSource = GetComponent<AudioSource>();
+
+            if (footstepAudioSource == null)
+            {
+                footstepAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+
+        if (footstepAudioSource != null)
+        {
+            footstepAudioSource.playOnAwake = false;
+
+            if (footstepsAre2D)
+            {
+                footstepAudioSource.spatialBlend = 0f;
+            }
+        }
+
         if (controller != null)
         {
             wasGrounded = controller.IsGrounded;
@@ -170,6 +230,8 @@ public class FirstPersonCameraAnimator : MonoBehaviour
                 targetPositionOffset = Vector3.zero;
                 currentRotationOffset = Vector3.zero;
                 targetRotationOffset = Vector3.zero;
+                movementBobWeight = 0f;
+                previousFootstepPhase = 0f;
             }
 
             cameraTransform.localPosition = originalCameraLocalPosition;
@@ -267,6 +329,8 @@ public class FirstPersonCameraAnimator : MonoBehaviour
                 {
                     landingTimer = landingAnimationDuration;
                     landingStrength = Mathf.InverseLerp(minimumLandingSpeed, hardLandingSpeed, landingSpeed);
+
+                    PlayLandingFootstep(landingStrength);
                 }
             }
         }
@@ -277,6 +341,7 @@ public class FirstPersonCameraAnimator : MonoBehaviour
         if (!enableMovementBob || controller == null || playerRigidbody == null)
         {
             movementBobWeight = SmoothFloat(movementBobWeight, 0f, movementBobBlendSpeed);
+            previousFootstepPhase = 0f;
             return;
         }
 
@@ -296,6 +361,7 @@ public class FirstPersonCameraAnimator : MonoBehaviour
 
         if (movementBobWeight <= 0.001f)
         {
+            previousFootstepPhase = 0f;
             return;
         }
 
@@ -327,6 +393,119 @@ public class FirstPersonCameraAnimator : MonoBehaviour
 
         targetRotationOffset.z += -rollBob * movementBobWeight;
         targetRotationOffset.x += pitchBob * movementBobWeight;
+
+        TryPlayFootstepFromBob(horizontalSpeed, runBlend, heavyTethered);
+    }
+
+    private void TryPlayFootstepFromBob(float horizontalSpeed, float runBlend, bool heavyTethered)
+    {
+        if (!enableFootsteps)
+        {
+            return;
+        }
+
+        if (footstepAudioSource == null)
+        {
+            return;
+        }
+
+        if (controller == null || !controller.IsGrounded)
+        {
+            previousFootstepPhase = 0f;
+            return;
+        }
+
+        if (!controller.HasMoveInput)
+        {
+            previousFootstepPhase = 0f;
+            return;
+        }
+
+        if (horizontalSpeed < minimumFootstepSpeed)
+        {
+            previousFootstepPhase = 0f;
+            return;
+        }
+
+        if (disableMovementBobWhileHeavyTethered && heavyTethered)
+        {
+            previousFootstepPhase = 0f;
+            return;
+        }
+
+        float phase = Mathf.Sin(movementBobTimer);
+
+        bool crossedStepPoint =
+            previousFootstepPhase > 0f &&
+            phase <= 0f;
+
+        previousFootstepPhase = phase;
+
+        if (!crossedStepPoint)
+        {
+            return;
+        }
+
+        if (Time.time - lastFootstepTime < minimumTimeBetweenFootsteps)
+        {
+            return;
+        }
+
+        PlayFootstep(runBlend);
+        lastFootstepTime = Time.time;
+        nextFootIsRight = !nextFootIsRight;
+    }
+
+    private void PlayFootstep(float runBlend)
+    {
+        AudioClip[] clips =
+            runBlend > 0.5f && runFootsteps != null && runFootsteps.Length > 0
+                ? runFootsteps
+                : walkFootsteps;
+
+        if (clips == null || clips.Length == 0)
+        {
+            return;
+        }
+
+        AudioClip clip = clips[Random.Range(0, clips.Length)];
+
+        if (clip == null)
+        {
+            return;
+        }
+
+        float volume = Mathf.Lerp(walkFootstepVolume, runFootstepVolume, runBlend);
+        float pitch = Random.Range(footstepPitchRange.x, footstepPitchRange.y);
+
+        footstepAudioSource.pitch = pitch;
+        footstepAudioSource.PlayOneShot(clip, volume);
+    }
+
+    private void PlayLandingFootstep(float strength)
+    {
+        if (!enableFootsteps || footstepAudioSource == null)
+        {
+            return;
+        }
+
+        if (landingFootsteps == null || landingFootsteps.Length == 0)
+        {
+            return;
+        }
+
+        AudioClip clip = landingFootsteps[Random.Range(0, landingFootsteps.Length)];
+
+        if (clip == null)
+        {
+            return;
+        }
+
+        float volume = landingFootstepVolume * Mathf.Clamp01(strength);
+        float pitch = Random.Range(footstepPitchRange.x, footstepPitchRange.y);
+
+        footstepAudioSource.pitch = pitch;
+        footstepAudioSource.PlayOneShot(clip, volume);
     }
 
     private void ApplyJumpAnimation()
@@ -520,8 +699,9 @@ public class FirstPersonCameraAnimator : MonoBehaviour
             $"Landing: {landingTimer:F2}\n" +
             $"Wall Impact: {wallImpactTimer:F2}\n" +
             $"Swing Speed: {smoothedSwingSpeed:F2}\n" +
-            $"Rotation Offset: {currentRotationOffset}";
+            $"Rotation Offset: {currentRotationOffset}\n" +
+            $"Footstep Phase: {previousFootstepPhase:F2}";
 
-        GUI.Box(new Rect(20f, 270f, 330f, 235f), text);
+        GUI.Box(new Rect(20f, 270f, 330f, 255f), text);
     }
 }

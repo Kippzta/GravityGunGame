@@ -15,6 +15,13 @@ public class SimpleMassDoor : MonoBehaviour
         CustomWorldDirection
     }
 
+    public enum DoorVisualStateMode
+    {
+        TargetOpen,
+        FullyOpen,
+        PartlyOpen
+    }
+
     [Header("Door Movement")]
     [Tooltip("Which direction the door moves when opening.")]
     [SerializeField] private DoorMoveDirection moveDirection = DoorMoveDirection.Up;
@@ -36,6 +43,39 @@ public class SimpleMassDoor : MonoBehaviour
 
     [Tooltip("If true, the door stays open forever after opening once.")]
     [SerializeField] private bool stayOpenOnceOpened = false;
+
+    [Header("Door Frame Visuals")]
+    [Tooltip("Renderers that use the emissive door frame material.")]
+    [SerializeField] private Renderer[] doorFrameRenderers;
+
+    [Tooltip("The shader bool/float property used by the door frame material. Use the Shader Graph Reference name, often DoorOpen or _DoorOpen.")]
+    [SerializeField] private string doorOpenShaderProperty = "DoorOpen";
+
+    [Tooltip("If true, uses MaterialPropertyBlock so this door can change visuals without creating unique material instances.")]
+    [SerializeField] private bool useMaterialPropertyBlock = true;
+
+    [Tooltip("Controls when the door frame becomes green/open.")]
+    [SerializeField] private DoorVisualStateMode visualStateMode = DoorVisualStateMode.TargetOpen;
+
+    [Tooltip("Used by Partly Open mode. If Open Amount is above this, the frame is considered open.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float partlyOpenVisualThreshold = 0.05f;
+
+    [Header("Door Frame Lights")]
+    [Tooltip("Realtime lights that should become green when open and red when closed.")]
+    [SerializeField] private Light[] doorStatusLights;
+
+    [SerializeField] private Color closedLightColor = Color.red;
+    [SerializeField] private Color openLightColor = Color.green;
+
+    [Tooltip("Light intensity when the door is closed.")]
+    [SerializeField] private float closedLightIntensity = 2f;
+
+    [Tooltip("Light intensity when the door is open.")]
+    [SerializeField] private float openLightIntensity = 2f;
+
+    [Tooltip("If true, light color smoothly blends between red and green while the door moves.")]
+    [SerializeField] private bool blendLightColorByOpenAmount = false;
 
     [Header("Blocking / Safety")]
     [Tooltip("If true, the door will not close while the player or physics objects are in the way.")]
@@ -95,6 +135,9 @@ public class SimpleMassDoor : MonoBehaviour
     private bool wasMoving;
     private bool wasBlocked;
 
+    private bool lastVisualOpenState;
+    private MaterialPropertyBlock materialPropertyBlock;
+
     public bool IsOpen => isOpen;
     public bool TargetOpen => targetOpen;
     public bool IsBlocked { get; private set; }
@@ -110,12 +153,23 @@ public class SimpleMassDoor : MonoBehaviour
         blockerCheckPadding = 0.03f;
         closingSafetySteps = 4;
         holdBlockedPositionUntilClear = true;
+
+        closedLightColor = Color.red;
+        openLightColor = Color.green;
+        closedLightIntensity = 2f;
+        openLightIntensity = 2f;
+        doorOpenShaderProperty = "DoorOpen";
     }
 
     private void Awake()
     {
         CacheDoorColliders();
         SetupRigidbody();
+
+        if (useMaterialPropertyBlock)
+        {
+            materialPropertyBlock = new MaterialPropertyBlock();
+        }
 
         closedPosition = transform.position;
         openPosition = closedPosition + GetWorldMoveDirection() * moveDistance;
@@ -126,11 +180,15 @@ public class SimpleMassDoor : MonoBehaviour
 
         Vector3 startPosition = startsOpen ? openPosition : closedPosition;
         MoveDoorToPosition(startPosition);
+
+        lastVisualOpenState = GetVisualOpenState();
+        ApplyDoorVisuals(lastVisualOpenState, true);
     }
 
     private void FixedUpdate()
     {
         UpdateDoorMovement();
+        UpdateDoorVisuals();
     }
 
     private void CacheDoorColliders()
@@ -231,6 +289,119 @@ public class SimpleMassDoor : MonoBehaviour
         if (targetOpen && OpenAmount > previousAmount)
         {
             hasOpenedOnce = true;
+        }
+    }
+
+    private void UpdateDoorVisuals()
+    {
+        bool visualOpenState = GetVisualOpenState();
+
+        if (visualOpenState != lastVisualOpenState || blendLightColorByOpenAmount)
+        {
+            ApplyDoorVisuals(visualOpenState, false);
+            lastVisualOpenState = visualOpenState;
+        }
+    }
+
+    private bool GetVisualOpenState()
+    {
+        switch (visualStateMode)
+        {
+            case DoorVisualStateMode.TargetOpen:
+                return targetOpen;
+
+            case DoorVisualStateMode.FullyOpen:
+                return isOpen;
+
+            case DoorVisualStateMode.PartlyOpen:
+                return OpenAmount >= partlyOpenVisualThreshold;
+
+            default:
+                return targetOpen;
+        }
+    }
+
+    private void ApplyDoorVisuals(bool open, bool force)
+    {
+        ApplyDoorFrameShaderBool(open);
+        ApplyDoorLights(open);
+    }
+
+    private void ApplyDoorFrameShaderBool(bool open)
+    {
+        if (doorFrameRenderers == null || doorFrameRenderers.Length == 0)
+        {
+            return;
+        }
+
+        float openValue = open ? 1f : 0f;
+
+        for (int i = 0; i < doorFrameRenderers.Length; i++)
+        {
+            Renderer doorFrameRenderer = doorFrameRenderers[i];
+
+            if (doorFrameRenderer == null)
+            {
+                continue;
+            }
+
+            if (useMaterialPropertyBlock)
+            {
+                doorFrameRenderer.GetPropertyBlock(materialPropertyBlock);
+                materialPropertyBlock.SetFloat(doorOpenShaderProperty, openValue);
+                doorFrameRenderer.SetPropertyBlock(materialPropertyBlock);
+            }
+            else
+            {
+                Material[] materials = doorFrameRenderer.materials;
+
+                for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+                {
+                    Material material = materials[materialIndex];
+
+                    if (material == null)
+                    {
+                        continue;
+                    }
+
+                    material.SetFloat(doorOpenShaderProperty, openValue);
+                }
+            }
+        }
+    }
+
+    private void ApplyDoorLights(bool open)
+    {
+        if (doorStatusLights == null || doorStatusLights.Length == 0)
+        {
+            return;
+        }
+
+        Color lightColor;
+        float lightIntensity;
+
+        if (blendLightColorByOpenAmount)
+        {
+            lightColor = Color.Lerp(closedLightColor, openLightColor, OpenAmount);
+            lightIntensity = Mathf.Lerp(closedLightIntensity, openLightIntensity, OpenAmount);
+        }
+        else
+        {
+            lightColor = open ? openLightColor : closedLightColor;
+            lightIntensity = open ? openLightIntensity : closedLightIntensity;
+        }
+
+        for (int i = 0; i < doorStatusLights.Length; i++)
+        {
+            Light statusLight = doorStatusLights[i];
+
+            if (statusLight == null)
+            {
+                continue;
+            }
+
+            statusLight.color = lightColor;
+            statusLight.intensity = lightIntensity;
         }
     }
 
@@ -518,6 +689,7 @@ public class SimpleMassDoor : MonoBehaviour
     public void Open()
     {
         targetOpen = true;
+        UpdateDoorVisuals();
     }
 
     public void Close()
@@ -528,6 +700,7 @@ public class SimpleMassDoor : MonoBehaviour
         }
 
         targetOpen = false;
+        UpdateDoorVisuals();
     }
 
     public void SetOpen(bool open)
@@ -599,9 +772,10 @@ public class SimpleMassDoor : MonoBehaviour
             $"Open Amount: {OpenAmount:P0}\n" +
             $"Target Open: {targetOpen}\n" +
             $"Is Open: {isOpen}\n" +
-            $"Blocked: {IsBlocked}";
+            $"Blocked: {IsBlocked}\n" +
+            $"Visual Open: {GetVisualOpenState()}";
 
-        GUI.Box(new Rect(350f, 380f, 260f, 140f), text);
+        GUI.Box(new Rect(350f, 380f, 280f, 160f), text);
     }
 
     private void OnDrawGizmosSelected()

@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: bf1e551a326327e458bf623d80c0fd3b, type: 2}
+    - target: {fileID: -7511558181221131132, guid: 7afb97d100c40dd4c95a06500c2ec18b, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 3a982d1dbeee1c34fa33e28b6a3c4fb9, type: 2}
     - target: {fileID: -7216203873981740213, guid: 7afb97d100c40dd4c95a06500c2ec18b, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 87
@@ -78,17 +82,17 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: -7216203873981740213, guid: 7afb97d100c40dd4c95a06500c2ec18b, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5416941733849649318}
+      addedObject: {fileID: 2453258299087479072}
     - targetCorrespondingSourceObject: {fileID: 4078304879374075213, guid: 7afb97d100c40dd4c95a06500c2ec18b, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2622268177916962331}
+      addedObject: {fileID: 3568585866611501461}
   m_SourcePrefab: {fileID: 100100000, guid: 7afb97d100c40dd4c95a06500c2ec18b, type: 3}
 --- !u!1 &5253549703864567667 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4078304879374075213, guid: 7afb97d100c40dd4c95a06500c2ec18b, type: 3}
   m_PrefabInstance: {fileID: 8102353072856056382}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &2622268177916962331
+--- !u!65 &3568585866611501461
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -114,7 +118,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -7216203873981740213, guid: 7afb97d100c40dd4c95a06500c2ec18b, type: 3}
   m_PrefabInstance: {fileID: 8102353072856056382}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &5416941733849649318
+--- !u!65 &2453258299087479072
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
